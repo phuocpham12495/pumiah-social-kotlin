@@ -1,0 +1,204 @@
+package com.phuocpham.pumiahsocial.data.repository
+
+import com.phuocpham.pumiahsocial.data.local.dao.FriendDao
+import com.phuocpham.pumiahsocial.data.local.entity.FriendEntity
+import com.phuocpham.pumiahsocial.data.model.Friend
+import com.phuocpham.pumiahsocial.data.model.FriendRequest
+import com.phuocpham.pumiahsocial.data.model.FriendRequestWithProfile
+import com.phuocpham.pumiahsocial.data.model.FriendshipStatus
+import com.phuocpham.pumiahsocial.data.model.Profile
+import com.phuocpham.pumiahsocial.util.safeApiCall
+import io.github.jan.supabase.auth.Auth
+import io.github.jan.supabase.postgrest.Postgrest
+import io.github.jan.supabase.postgrest.from
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
+import javax.inject.Inject
+import javax.inject.Singleton
+
+@Singleton
+class FriendsRepositoryImpl @Inject constructor(
+    private val postgrest: Postgrest,
+    private val auth: Auth,
+    private val friendDao: FriendDao
+) : FriendsRepository {
+
+    private val currentUserId: String
+        get() = auth.currentUserOrNull()?.id ?: ""
+
+    override suspend fun sendFriendRequest(receiverId: String): Result<Unit> = safeApiCall {
+        postgrest.from("friend_requests").insert(
+            FriendRequest(
+                senderId = currentUserId,
+                receiverId = receiverId
+            )
+        )
+        // Create notification
+        postgrest.from("notifications").insert(
+            mapOf(
+                "recipient_id" to receiverId,
+                "sender_id" to currentUserId,
+                "type" to "friend_request",
+                "message" to "đã gửi cho bạn lời mời kết bạn"
+            )
+        )
+    }
+
+    override suspend fun acceptFriendRequest(requestId: String, senderId: String): Result<Unit> = safeApiCall {
+        // Update request status
+        postgrest.from("friend_requests").update(
+            mapOf("status" to "accepted")
+        ) { filter { eq("id", requestId) } }
+
+        // Insert into friends table (ensure user1_id < user2_id)
+        val (u1, u2) = if (currentUserId < senderId) {
+            currentUserId to senderId
+        } else {
+            senderId to currentUserId
+        }
+        postgrest.from("friendships").insert(
+            Friend(user1Id = u1, user2Id = u2)
+        )
+
+        // Notify sender
+        postgrest.from("notifications").insert(
+            mapOf(
+                "recipient_id" to senderId,
+                "sender_id" to currentUserId,
+                "type" to "friend_request",
+                "message" to "đã chấp nhận lời mời kết bạn của bạn"
+            )
+        )
+
+        refreshFriendsList()
+    }
+
+    override suspend fun declineFriendRequest(requestId: String): Result<Unit> = safeApiCall {
+        postgrest.from("friend_requests").update(
+            mapOf("status" to "declined")
+        ) { filter { eq("id", requestId) } }
+    }
+
+    override suspend fun removeFriend(friendUserId: String): Result<Unit> = safeApiCall {
+        val (u1, u2) = if (currentUserId < friendUserId) {
+            currentUserId to friendUserId
+        } else {
+            friendUserId to currentUserId
+        }
+        postgrest.from("friendships").delete {
+            filter {
+                eq("user1_id", u1)
+                eq("user2_id", u2)
+            }
+        }
+        refreshFriendsList()
+    }
+
+    override suspend fun getFriendsList(userId: String): Result<List<Profile>> = safeApiCall {
+        val friends1 = postgrest.from("friendships")
+            .select { filter { eq("user1_id", userId) } }
+            .decodeList<Friend>()
+        val friends2 = postgrest.from("friendships")
+            .select { filter { eq("user2_id", userId) } }
+            .decodeList<Friend>()
+
+        val friendIds = friends1.map { it.user2Id } + friends2.map { it.user1Id }
+
+        if (friendIds.isEmpty()) return@safeApiCall emptyList()
+
+        postgrest.from("profiles")
+            .select { filter { isIn("id", friendIds) } }
+            .decodeList<Profile>()
+    }
+
+    override suspend fun getPendingRequests(): Result<List<FriendRequestWithProfile>> = safeApiCall {
+        val requests = postgrest.from("friend_requests")
+            .select { filter { eq("receiver_id", currentUserId); eq("status", "pending") } }
+            .decodeList<FriendRequest>()
+
+        val senderIds = requests.map { it.senderId }
+        val profiles = if (senderIds.isNotEmpty()) {
+            postgrest.from("profiles")
+                .select { filter { isIn("id", senderIds) } }
+                .decodeList<Profile>()
+                .associateBy { it.id }
+        } else emptyMap()
+
+        requests.map { request ->
+            FriendRequestWithProfile(
+                request = request,
+                senderProfile = profiles[request.senderId]
+            )
+        }
+    }
+
+    override suspend fun getFriendshipStatus(otherUserId: String): FriendshipStatus {
+        return try {
+            // Check if already friends
+            val (u1, u2) = if (currentUserId < otherUserId) {
+                currentUserId to otherUserId
+            } else {
+                otherUserId to currentUserId
+            }
+            val friends = postgrest.from("friendships")
+                .select {
+                    filter {
+                        eq("user1_id", u1)
+                        eq("user2_id", u2)
+                    }
+                }
+                .decodeList<Friend>()
+            if (friends.isNotEmpty()) return FriendshipStatus.FRIENDS
+
+            // Check pending requests
+            val sentRequests = postgrest.from("friend_requests")
+                .select {
+                    filter {
+                        eq("sender_id", currentUserId)
+                        eq("receiver_id", otherUserId)
+                        eq("status", "pending")
+                    }
+                }
+                .decodeList<FriendRequest>()
+            if (sentRequests.isNotEmpty()) return FriendshipStatus.PENDING_SENT
+
+            val receivedRequests = postgrest.from("friend_requests")
+                .select {
+                    filter {
+                        eq("sender_id", otherUserId)
+                        eq("receiver_id", currentUserId)
+                        eq("status", "pending")
+                    }
+                }
+                .decodeList<FriendRequest>()
+            if (receivedRequests.isNotEmpty()) return FriendshipStatus.PENDING_RECEIVED
+
+            FriendshipStatus.NONE
+        } catch (e: Exception) {
+            FriendshipStatus.NONE
+        }
+    }
+
+    override fun getFriendIdsFlow(): Flow<List<String>> {
+        return friendDao.getAllFriends().map { friends ->
+            friends.map { it.friendUserId }
+        }
+    }
+
+    private suspend fun refreshFriendsList() {
+        val friends1 = postgrest.from("friendships")
+            .select { filter { eq("user1_id", currentUserId) } }
+            .decodeList<Friend>()
+        val friends2 = postgrest.from("friendships")
+            .select { filter { eq("user2_id", currentUserId) } }
+            .decodeList<Friend>()
+
+        val entities = friends1.map {
+            FriendEntity(it.user1Id, it.user2Id, it.user2Id, it.createdAt)
+        } + friends2.map {
+            FriendEntity(it.user1Id, it.user2Id, it.user1Id, it.createdAt)
+        }
+        friendDao.clearAll()
+        friendDao.upsertFriends(entities)
+    }
+}
