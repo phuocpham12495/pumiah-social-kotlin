@@ -27,7 +27,22 @@ class FriendsRepositoryImpl @Inject constructor(
         get() = auth.currentUserOrNull()?.id ?: ""
 
     override suspend fun sendFriendRequest(receiverId: String): Result<Unit> = safeApiCall {
-        // Use mapOf to avoid sending empty id/createdAt (let Supabase auto-generate)
+        // Delete any previous declined/accepted request to avoid unique constraint violation
+        postgrest.from("friend_requests").delete {
+            filter {
+                eq("sender_id", currentUserId)
+                eq("receiver_id", receiverId)
+                neq("status", "pending")
+            }
+        }
+        postgrest.from("friend_requests").delete {
+            filter {
+                eq("sender_id", receiverId)
+                eq("receiver_id", currentUserId)
+                neq("status", "pending")
+            }
+        }
+        // Insert new pending request
         postgrest.from("friend_requests").insert(
             mapOf(
                 "sender_id" to currentUserId,
@@ -97,6 +112,21 @@ class FriendsRepositoryImpl @Inject constructor(
             filter {
                 eq("user1_id", u1)
                 eq("user2_id", u2)
+            }
+        }
+        // Also clean up friend_requests so getFriendshipStatus returns NONE
+        postgrest.from("friend_requests").delete {
+            filter {
+                or {
+                    and {
+                        eq("sender_id", currentUserId)
+                        eq("receiver_id", friendUserId)
+                    }
+                    and {
+                        eq("sender_id", friendUserId)
+                        eq("receiver_id", currentUserId)
+                    }
+                }
             }
         }
         refreshFriendsList()

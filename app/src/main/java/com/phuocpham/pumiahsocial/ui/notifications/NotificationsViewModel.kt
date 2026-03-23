@@ -25,6 +25,9 @@ class NotificationsViewModel @Inject constructor(
     val unreadCount: StateFlow<Int> = notificationsRepository.getUnreadCountFlow()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
 
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+
     init {
         loadNotifications()
     }
@@ -39,6 +42,18 @@ class NotificationsViewModel @Inject constructor(
         }
     }
 
+    fun refreshNotifications() {
+        viewModelScope.launch {
+            _isRefreshing.value = true
+            notificationsRepository.getNotifications().fold(
+                onSuccess = { _notifications.value = UiState.Success(it) },
+                onFailure = { }
+            )
+            notificationsRepository.refreshUnreadCount()
+            _isRefreshing.value = false
+        }
+    }
+
     fun markAsRead(notificationId: String) {
         viewModelScope.launch {
             notificationsRepository.markAsRead(notificationId)
@@ -49,6 +64,15 @@ class NotificationsViewModel @Inject constructor(
         viewModelScope.launch {
             notificationsRepository.markAllAsRead().fold(
                 onSuccess = { loadNotifications() },
+                onFailure = { }
+            )
+        }
+    }
+
+    fun deleteAllNotifications() {
+        viewModelScope.launch {
+            notificationsRepository.deleteAllNotifications().fold(
+                onSuccess = { _notifications.value = UiState.Success(emptyList()) },
                 onFailure = { }
             )
         }

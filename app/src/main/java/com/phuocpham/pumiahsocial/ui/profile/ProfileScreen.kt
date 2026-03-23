@@ -11,6 +11,8 @@ import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.PersonRemove
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,6 +46,8 @@ fun ProfileScreen(
     val userPosts by viewModel.userPosts.collectAsState()
     val friendCount by viewModel.friendCount.collectAsState()
     val isOwnProfile by viewModel.isOwnProfile.collectAsState()
+    val isRefreshing by viewModel.isRefreshing.collectAsState()
+    val pullToRefreshState = rememberPullToRefreshState()
 
     LaunchedEffect(userId) {
         viewModel.loadProfile(userId)
@@ -70,17 +74,22 @@ fun ProfileScreen(
             )
         }
     ) { padding ->
-        when (val state = profileState) {
-            is UiState.Loading -> LoadingIndicator(modifier = Modifier.padding(padding))
-            is UiState.Error -> ErrorMessage(
-                message = state.message,
-                onRetry = { viewModel.loadProfile(userId) },
-                modifier = Modifier.padding(padding)
-            )
-            is UiState.Success -> {
-                val profile = state.data
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize().padding(padding)
+        PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = { viewModel.refreshProfile() },
+            state = pullToRefreshState,
+            modifier = Modifier.fillMaxSize().padding(padding)
+        ) {
+            when (val state = profileState) {
+                is UiState.Loading -> LoadingIndicator()
+                is UiState.Error -> ErrorMessage(
+                    message = state.message,
+                    onRetry = { viewModel.loadProfile(userId) }
+                )
+                is UiState.Success -> {
+                    val profile = state.data
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize()
                 ) {
                     // Cover photo
                     item {
@@ -235,6 +244,7 @@ fun ProfileScreen(
                         }
                     }
                 }
+            }
             }
         }
     }

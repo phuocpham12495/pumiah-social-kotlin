@@ -70,6 +70,13 @@ class NotificationsRepositoryImpl @Inject constructor(
         _unreadCount.value = 0
     }
 
+    override suspend fun deleteAllNotifications(): Result<Unit> = safeApiCall {
+        postgrest.from("notifications").delete {
+            filter { eq("recipient_id", currentUserId) }
+        }
+        _unreadCount.value = 0
+    }
+
     override fun getUnreadCountFlow(): Flow<Int> = _unreadCount
 
     override suspend fun refreshUnreadCount() {

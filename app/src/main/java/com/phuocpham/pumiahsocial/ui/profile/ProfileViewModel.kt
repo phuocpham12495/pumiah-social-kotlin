@@ -48,6 +48,9 @@ class ProfileViewModel @Inject constructor(
 
     fun clearError() { _errorMessage.value = null }
 
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+
     private var profileUserId: String? = null
 
     val userId: String? = savedStateHandle.get<String>("userId")
@@ -83,6 +86,30 @@ class ProfileViewModel @Inject constructor(
                 onSuccess = { _userPosts.value = UiState.Success(it) },
                 onFailure = { _userPosts.value = UiState.Error(it.message ?: "Lỗi tải bài viết") }
             )
+        }
+    }
+
+    fun refreshProfile() {
+        val uid = profileUserId ?: return
+        viewModelScope.launch {
+            _isRefreshing.value = true
+            profileRepository.fetchProfile(uid).fold(
+                onSuccess = { _profileState.value = UiState.Success(it) },
+                onFailure = { }
+            )
+            val currentUserId = authRepository.getCurrentUserId() ?: ""
+            if (uid != currentUserId) {
+                _friendshipStatus.value = friendsRepository.getFriendshipStatus(uid)
+            }
+            friendsRepository.getFriendsList(uid).fold(
+                onSuccess = { _friendCount.value = it.size },
+                onFailure = { }
+            )
+            postsRepository.getUserPosts(uid).fold(
+                onSuccess = { _userPosts.value = UiState.Success(it) },
+                onFailure = { }
+            )
+            _isRefreshing.value = false
         }
     }
 

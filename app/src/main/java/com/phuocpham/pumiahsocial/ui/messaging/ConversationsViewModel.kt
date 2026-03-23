@@ -20,6 +20,9 @@ class ConversationsViewModel @Inject constructor(
     private val _conversations = MutableStateFlow<UiState<List<ConversationWithDetails>>>(UiState.Loading)
     val conversations: StateFlow<UiState<List<ConversationWithDetails>>> = _conversations.asStateFlow()
 
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+
     init {
         loadConversations()
     }
@@ -31,6 +34,17 @@ class ConversationsViewModel @Inject constructor(
                 onSuccess = { _conversations.value = UiState.Success(it) },
                 onFailure = { _conversations.value = UiState.Error(it.message ?: "Lỗi tải hội thoại") }
             )
+        }
+    }
+
+    fun refreshConversations() {
+        viewModelScope.launch {
+            _isRefreshing.value = true
+            messagesRepository.getConversations().fold(
+                onSuccess = { _conversations.value = UiState.Success(it) },
+                onFailure = { }
+            )
+            _isRefreshing.value = false
         }
     }
 }

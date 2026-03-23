@@ -10,6 +10,8 @@ import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.PersonRemove
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,8 +32,15 @@ fun FriendsListScreen(
     viewModel: FriendsViewModel = hiltViewModel()
 ) {
     val friendsList by viewModel.friendsList.collectAsState()
+    val pendingRequests by viewModel.pendingRequests.collectAsState()
+    val isRefreshing by viewModel.isRefreshing.collectAsState()
+    val pullToRefreshState = rememberPullToRefreshState()
+    val pendingCount = (pendingRequests as? UiState.Success)?.data?.size ?: 0
 
-    LaunchedEffect(Unit) { viewModel.loadFriends() }
+    LaunchedEffect(Unit) {
+        viewModel.loadFriends()
+        viewModel.loadPendingRequests()
+    }
 
     Scaffold(
         topBar = {
@@ -42,36 +51,47 @@ fun FriendsListScreen(
                         Icon(Icons.Default.Search, "Tìm kiếm bạn bè")
                     }
                     IconButton(onClick = onNavigateToRequests) {
-                        Icon(Icons.Default.PersonAdd, "Lời mời kết bạn")
+                        BadgedBox(
+                            badge = {
+                                if (pendingCount > 0) {
+                                    Badge { Text("$pendingCount") }
+                                }
+                            }
+                        ) {
+                            Icon(Icons.Default.PersonAdd, "Lời mời kết bạn")
+                        }
                     }
                 }
             )
         }
     ) { padding ->
-        when (val state = friendsList) {
-            is UiState.Loading -> LoadingIndicator(modifier = Modifier.padding(padding))
-            is UiState.Error -> ErrorMessage(
-                message = state.message,
-                onRetry = { viewModel.loadFriends() },
-                modifier = Modifier.padding(padding)
-            )
-            is UiState.Success -> {
-                if (state.data.isEmpty()) {
-                    ErrorMessage(
-                        message = "Bạn chưa có bạn bè nào",
-                        modifier = Modifier.padding(padding)
-                    )
-                } else {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize().padding(padding),
-                        contentPadding = PaddingValues(8.dp)
-                    ) {
-                        items(state.data, key = { it.id }) { friend ->
-                            FriendListItem(
-                                friend = friend,
-                                onProfileClick = { onNavigateToProfile(friend.id) },
-                                onRemoveFriend = { viewModel.removeFriend(friend.id) }
-                            )
+        PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = { viewModel.refreshFriends() },
+            state = pullToRefreshState,
+            modifier = Modifier.fillMaxSize().padding(padding)
+        ) {
+            when (val state = friendsList) {
+                is UiState.Loading -> LoadingIndicator()
+                is UiState.Error -> ErrorMessage(
+                    message = state.message,
+                    onRetry = { viewModel.loadFriends() }
+                )
+                is UiState.Success -> {
+                    if (state.data.isEmpty()) {
+                        ErrorMessage(message = "Bạn chưa có bạn bè nào")
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(8.dp)
+                        ) {
+                            items(state.data, key = { it.id }) { friend ->
+                                FriendListItem(
+                                    friend = friend,
+                                    onProfileClick = { onNavigateToProfile(friend.id) },
+                                    onRemoveFriend = { viewModel.removeFriend(friend.id) }
+                                )
+                            }
                         }
                     }
                 }

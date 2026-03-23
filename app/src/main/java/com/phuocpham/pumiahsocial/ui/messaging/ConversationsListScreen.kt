@@ -5,7 +5,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -24,72 +27,75 @@ fun ConversationsListScreen(
     viewModel: ConversationsViewModel = hiltViewModel()
 ) {
     val conversations by viewModel.conversations.collectAsState()
+    val isRefreshing by viewModel.isRefreshing.collectAsState()
+    val pullToRefreshState = rememberPullToRefreshState()
 
     Scaffold(
         topBar = {
             TopAppBar(title = { Text("Tin nhắn") })
         }
     ) { padding ->
-        when (val state = conversations) {
-            is UiState.Loading -> LoadingIndicator(modifier = Modifier.padding(padding))
-            is UiState.Error -> ErrorMessage(
-                message = state.message,
-                onRetry = { viewModel.loadConversations() },
-                modifier = Modifier.padding(padding)
-            )
-            is UiState.Success -> {
-                if (state.data.isEmpty()) {
-                    ErrorMessage(
-                        message = "Chưa có cuộc hội thoại nào",
-                        modifier = Modifier.padding(padding)
-                    )
-                } else {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize().padding(padding)
-                    ) {
-                        items(state.data, key = { it.conversation.id }) { convo ->
-                            ListItem(
-                                headlineContent = {
-                                    Text(
-                                        text = convo.otherUserProfile?.name
-                                            ?: convo.otherUserProfile?.username
-                                            ?: "Người dùng",
-                                        fontWeight = if (convo.unreadCount > 0) FontWeight.Bold else FontWeight.Normal
-                                    )
-                                },
-                                supportingContent = {
-                                    convo.lastMessage?.let { msg ->
+        PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = { viewModel.refreshConversations() },
+            state = pullToRefreshState,
+            modifier = Modifier.fillMaxSize().padding(padding)
+        ) {
+            when (val state = conversations) {
+                is UiState.Loading -> LoadingIndicator()
+                is UiState.Error -> ErrorMessage(
+                    message = state.message,
+                    onRetry = { viewModel.loadConversations() }
+                )
+                is UiState.Success -> {
+                    if (state.data.isEmpty()) {
+                        ErrorMessage(message = "Chưa có cuộc hội thoại nào")
+                    } else {
+                        LazyColumn(modifier = Modifier.fillMaxSize()) {
+                            items(state.data, key = { it.conversation.id }) { convo ->
+                                ListItem(
+                                    headlineContent = {
                                         Text(
-                                            text = msg.content,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis,
+                                            text = convo.otherUserProfile?.name
+                                                ?: convo.otherUserProfile?.username
+                                                ?: "Người dùng",
                                             fontWeight = if (convo.unreadCount > 0) FontWeight.Bold else FontWeight.Normal
                                         )
-                                    }
-                                },
-                                trailingContent = {
-                                    Column(horizontalAlignment = androidx.compose.ui.Alignment.End) {
-                                        convo.lastMessage?.let {
+                                    },
+                                    supportingContent = {
+                                        convo.lastMessage?.let { msg ->
                                             Text(
-                                                formatRelativeTime(it.createdAt),
-                                                style = MaterialTheme.typography.labelSmall
+                                                text = msg.content,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis,
+                                                fontWeight = if (convo.unreadCount > 0) FontWeight.Bold else FontWeight.Normal
                                             )
                                         }
-                                        if (convo.unreadCount > 0) {
-                                            Badge { Text("${convo.unreadCount}") }
+                                    },
+                                    trailingContent = {
+                                        Column(horizontalAlignment = Alignment.End) {
+                                            convo.lastMessage?.let {
+                                                Text(
+                                                    formatRelativeTime(it.createdAt),
+                                                    style = MaterialTheme.typography.labelSmall
+                                                )
+                                            }
+                                            if (convo.unreadCount > 0) {
+                                                Badge { Text("${convo.unreadCount}") }
+                                            }
                                         }
+                                    },
+                                    leadingContent = {
+                                        UserAvatar(
+                                            avatarUrl = convo.otherUserProfile?.avatarUrl,
+                                            size = 48.dp
+                                        )
+                                    },
+                                    modifier = Modifier.clickable {
+                                        onNavigateToChat(convo.conversation.id)
                                     }
-                                },
-                                leadingContent = {
-                                    UserAvatar(
-                                        avatarUrl = convo.otherUserProfile?.avatarUrl,
-                                        size = 48.dp
-                                    )
-                                },
-                                modifier = Modifier.clickable {
-                                    onNavigateToChat(convo.conversation.id)
-                                }
-                            )
+                                )
+                            }
                         }
                     }
                 }

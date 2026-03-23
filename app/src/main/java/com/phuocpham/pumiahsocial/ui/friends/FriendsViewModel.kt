@@ -26,6 +26,9 @@ class FriendsViewModel @Inject constructor(
     private val _pendingRequests = MutableStateFlow<UiState<List<FriendRequestWithProfile>>>(UiState.Loading)
     val pendingRequests: StateFlow<UiState<List<FriendRequestWithProfile>>> = _pendingRequests.asStateFlow()
 
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+
     fun loadFriends() {
         viewModelScope.launch {
             _friendsList.value = UiState.Loading
@@ -34,6 +37,18 @@ class FriendsViewModel @Inject constructor(
                 onSuccess = { _friendsList.value = UiState.Success(it) },
                 onFailure = { _friendsList.value = UiState.Error(it.message ?: "Lỗi tải danh sách bạn bè") }
             )
+        }
+    }
+
+    fun refreshFriends() {
+        viewModelScope.launch {
+            _isRefreshing.value = true
+            val userId = authRepository.getCurrentUserId() ?: return@launch
+            friendsRepository.getFriendsList(userId).fold(
+                onSuccess = { _friendsList.value = UiState.Success(it) },
+                onFailure = { }
+            )
+            _isRefreshing.value = false
         }
     }
 

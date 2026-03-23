@@ -122,10 +122,9 @@ fun PumiahSocialMainContent() {
                                 if (currentRoute != item.route) {
                                     navController.navigate(item.route) {
                                         popUpTo(Screen.Feed.route) {
-                                            saveState = true
+                                            inclusive = false
                                         }
                                         launchSingleTop = true
-                                        restoreState = true
                                     }
                                 }
                             },
