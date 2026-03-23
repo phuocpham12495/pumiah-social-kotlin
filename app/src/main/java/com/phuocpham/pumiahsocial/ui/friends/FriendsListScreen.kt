@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PersonAdd
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.PersonRemove
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -25,6 +26,7 @@ import com.phuocpham.pumiahsocial.util.UiState
 fun FriendsListScreen(
     onNavigateToProfile: (String) -> Unit,
     onNavigateToRequests: () -> Unit,
+    onNavigateToSearch: () -> Unit = {},
     viewModel: FriendsViewModel = hiltViewModel()
 ) {
     val friendsList by viewModel.friendsList.collectAsState()
@@ -36,6 +38,9 @@ fun FriendsListScreen(
             TopAppBar(
                 title = { Text("Bạn bè") },
                 actions = {
+                    IconButton(onClick = onNavigateToSearch) {
+                        Icon(Icons.Default.Search, "Tìm kiếm bạn bè")
+                    }
                     IconButton(onClick = onNavigateToRequests) {
                         Icon(Icons.Default.PersonAdd, "Lời mời kết bạn")
                     }

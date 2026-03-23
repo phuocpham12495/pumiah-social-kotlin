@@ -1,0 +1,137 @@
+{
+  "tienTrinh": {
+    "tongQuan": "90%",
+    "ghiChu": "MVP hoan thanh + bo sung image picker, search, dark mode, offline banner, notification prefs, schema fix. Con thieu: realtime WebSocket, pagination, unit testing, R8 release build"
+  },
+  "khaiNiem": [
+    {
+      "ten": "Jetpack Compose",
+      "moTa": "Declarative UI framework cho Android",
+      "tienDo": "92%",
+      "kyNang": ["@Composable functions", "State management", "LazyColumn", "Navigation", "Material3", "AnimatedVisibility", "PullToRefreshBox", "rememberLauncherForActivityResult"]
+    },
+    {
+      "ten": "MVVM Architecture",
+      "moTa": "Model-View-ViewModel pattern",
+      "tienDo": "90%",
+      "kyNang": ["ViewModel", "StateFlow", "Repository pattern", "UiState sealed class", "SavedStateHandle", "12 ViewModels trien khai"]
+    },
+    {
+      "ten": "Hilt Dependency Injection",
+      "moTa": "Compile-time DI cho Android",
+      "tienDo": "88%",
+      "kyNang": ["@HiltAndroidApp", "@AndroidEntryPoint", "@HiltViewModel", "4 Modules", "Singleton scoping", "@Binds interface binding"]
+    },
+    {
+      "ten": "Supabase SDK",
+      "moTa": "Backend-as-a-Service client v3.1.1",
+      "tienDo": "82%",
+      "kyNang": ["GoTrue Auth", "Postgrest CRUD", "Postgrest ilike search", "Storage uploads", "Realtime (co ban)", "@SerialName mapping", "Schema verification via REST API"]
+    },
+    {
+      "ten": "Room Database",
+      "moTa": "Local SQLite abstraction v2.6.1",
+      "tienDo": "80%",
+      "kyNang": ["Entity", "DAO", "Flow queries", "Upsert", "Migration (co ban)", "Type converters", "5 entities + 4 DAOs"]
+    },
+    {
+      "ten": "Kotlin Coroutines & Flow",
+      "moTa": "Asynchronous programming",
+      "tienDo": "88%",
+      "kyNang": ["viewModelScope", "StateFlow", "Flow.map", "suspend functions", "safeApiCall", "callbackFlow", "distinctUntilChanged", "Job cancellation", "delay debounce"]
+    },
+    {
+      "ten": "Navigation Compose",
+      "moTa": "Type-safe navigation v2.8.5",
+      "tienDo": "90%",
+      "kyNang": ["NavHost", "15 Routes", "String arguments", "Bottom navigation", "Back stack management", "Nested navigation", "popUpTo"]
+    },
+    {
+      "ten": "Activity Result API",
+      "moTa": "Modern callback API cho Android activities",
+      "tienDo": "82%",
+      "kyNang": ["rememberLauncherForActivityResult", "ActivityResultContracts.GetContent", "ContentResolver bytes reading", "URI handling", "Avatar/cover/post image uploads"]
+    },
+    {
+      "ten": "DataStore Preferences",
+      "moTa": "Modern key-value storage v1.1.1",
+      "tienDo": "85%",
+      "kyNang": ["PreferencesDataStore", "booleanPreferencesKey", "Flow-based reads", "edit writes", "Dark mode + 4 notification prefs"]
+    },
+    {
+      "ten": "ConnectivityManager",
+      "moTa": "Network state monitoring",
+      "tienDo": "80%",
+      "kyNang": ["NetworkCallback", "NetworkCapabilities", "callbackFlow integration", "AnimatedVisibility offline banner"]
+    },
+    {
+      "ten": "Supabase Schema Debugging",
+      "moTa": "Phan tich va fix schema mismatch giua code va database",
+      "tienDo": "95%",
+      "kyNang": ["REST API OpenAPI endpoint", "@SerialName annotation mapping", "Polymorphic table design (likes target_id/target_type)", "Table naming conventions (friendships vs friends)", "Column naming verification"]
+    },
+    {
+      "ten": "Kotlinx Serialization",
+      "moTa": "JSON serialization/deserialization v1.7.3",
+      "tienDo": "85%",
+      "kyNang": ["@Serializable", "@SerialName", "decodeList", "decodeSingle", "Default values cho optional fields"]
+    }
+  ],
+  "khoangTrong": [
+    {
+      "ten": "Supabase Realtime Channels",
+      "moTa": "WebSocket subscriptions cho live updates (thay the polling)",
+      "mucDoQuanTrong": "Trung binh"
+    },
+    {
+      "ten": "Unit Testing voi Hilt",
+      "moTa": "Mock repositories, test ViewModels, integration tests",
+      "mucDoQuanTrong": "Cao"
+    },
+    {
+      "ten": "ProGuard/R8 Configuration",
+      "moTa": "Code shrinking va obfuscation cho release build",
+      "mucDoQuanTrong": "Trung binh"
+    },
+    {
+      "ten": "Pagination (Paging3)",
+      "moTa": "Paging3 library cho feed loading thay vi limit(50)",
+      "mucDoQuanTrong": "Trung binh"
+    },
+    {
+      "ten": "Camera Capture",
+      "moTa": "TakePicture contract cho chup anh truc tiep",
+      "mucDoQuanTrong": "Thap"
+    },
+    {
+      "ten": "Image Compression",
+      "moTa": "Compress anh truoc khi upload de giam bandwidth",
+      "mucDoQuanTrong": "Thap"
+    }
+  ],
+  "baiTapTiepTheo": [
+    "Viet unit tests cho tat ca 7 repositories",
+    "Them Supabase Realtime channel cho chat thay vi polling 3s",
+    "Implement Paging3 cho feed pagination",
+    "Bat R8/ProGuard cho release build va do kich thuoc APK",
+    "Them camera capture (TakePicture contract) ben canh gallery picker",
+    "Them multi-image selection (PickMultipleVisualMedia) cho bai viet",
+    "Image compression truoc khi upload len Storage",
+    "Them swipe-to-delete cho comments",
+    "Baseline Profiles cho toi uu khoi dong app"
+  ],
+  "thongKeDuAn": {
+    "ngayBatDau": "2026-03-22",
+    "ngayCapNhat": "2026-03-22",
+    "tongSoFiles": "60+",
+    "viewModels": 12,
+    "repositories": 7,
+    "roomEntities": 5,
+    "roomDAOs": 4,
+    "hiltModules": 4,
+    "uiScreens": 15,
+    "sharedComponents": 6,
+    "apkSize": "21.4 MB (debug)",
+    "buildTime": "~83s (cold)"
+  }
+}

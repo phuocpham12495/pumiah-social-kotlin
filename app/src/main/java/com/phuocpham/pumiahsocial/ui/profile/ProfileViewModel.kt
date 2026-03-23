@@ -43,6 +43,11 @@ class ProfileViewModel @Inject constructor(
     private val _isOwnProfile = MutableStateFlow(true)
     val isOwnProfile: StateFlow<Boolean> = _isOwnProfile.asStateFlow()
 
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+
+    fun clearError() { _errorMessage.value = null }
+
     private var profileUserId: String? = null
 
     val userId: String? = savedStateHandle.get<String>("userId")

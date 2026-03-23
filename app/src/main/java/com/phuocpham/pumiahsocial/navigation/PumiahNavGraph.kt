@@ -62,7 +62,6 @@ fun PumiahNavGraph(
                 onNavigateToProfile = { userId ->
                     navController.navigate(Screen.UserProfile.createRoute(userId))
                 },
-                onNavigateToSearch = { navController.navigate(Screen.Search.route) }
             )
         }
         composable(Screen.CreatePost.route) {
@@ -126,7 +125,8 @@ fun PumiahNavGraph(
                 onNavigateToProfile = { userId ->
                     navController.navigate(Screen.UserProfile.createRoute(userId))
                 },
-                onNavigateToRequests = { navController.navigate(Screen.FriendRequests.route) }
+                onNavigateToRequests = { navController.navigate(Screen.FriendRequests.route) },
+                onNavigateToSearch = { navController.navigate(Screen.Search.route) }
             )
         }
         composable(Screen.FriendRequests.route) {

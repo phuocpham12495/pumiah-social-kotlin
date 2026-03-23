@@ -27,21 +27,26 @@ class FriendsRepositoryImpl @Inject constructor(
         get() = auth.currentUserOrNull()?.id ?: ""
 
     override suspend fun sendFriendRequest(receiverId: String): Result<Unit> = safeApiCall {
+        // Use mapOf to avoid sending empty id/createdAt (let Supabase auto-generate)
         postgrest.from("friend_requests").insert(
-            FriendRequest(
-                senderId = currentUserId,
-                receiverId = receiverId
-            )
-        )
-        // Create notification
-        postgrest.from("notifications").insert(
             mapOf(
-                "recipient_id" to receiverId,
                 "sender_id" to currentUserId,
-                "type" to "friend_request",
-                "message" to "đã gửi cho bạn lời mời kết bạn"
+                "receiver_id" to receiverId,
+                "status" to "pending"
             )
         )
+        // Create notification (non-blocking so friend request still succeeds)
+        try {
+            postgrest.from("notifications").insert(
+                mapOf(
+                    "recipient_id" to receiverId,
+                    "sender_id" to currentUserId,
+                    "type" to "friend_request",
+                    "message" to "đã gửi cho bạn lời mời kết bạn",
+                    "target_url" to ""
+                )
+            )
+        } catch (_: Exception) { }
     }
 
     override suspend fun acceptFriendRequest(requestId: String, senderId: String): Result<Unit> = safeApiCall {
@@ -57,18 +62,21 @@ class FriendsRepositoryImpl @Inject constructor(
             senderId to currentUserId
         }
         postgrest.from("friendships").insert(
-            Friend(user1Id = u1, user2Id = u2)
+            mapOf("user1_id" to u1, "user2_id" to u2)
         )
 
-        // Notify sender
-        postgrest.from("notifications").insert(
-            mapOf(
-                "recipient_id" to senderId,
-                "sender_id" to currentUserId,
-                "type" to "friend_request",
-                "message" to "đã chấp nhận lời mời kết bạn của bạn"
+        // Notify sender (non-blocking)
+        try {
+            postgrest.from("notifications").insert(
+                mapOf(
+                    "recipient_id" to senderId,
+                    "sender_id" to currentUserId,
+                    "type" to "friend_request",
+                    "message" to "đã chấp nhận lời mời kết bạn của bạn",
+                    "target_url" to ""
+                )
             )
-        )
+        } catch (_: Exception) { }
 
         refreshFriendsList()
     }
@@ -134,7 +142,7 @@ class FriendsRepositoryImpl @Inject constructor(
 
     override suspend fun getFriendshipStatus(otherUserId: String): FriendshipStatus {
         return try {
-            // Check if already friends
+            // Check if already friends in friendships table
             val (u1, u2) = if (currentUserId < otherUserId) {
                 currentUserId to otherUserId
             } else {
@@ -150,28 +158,36 @@ class FriendsRepositoryImpl @Inject constructor(
                 .decodeList<Friend>()
             if (friends.isNotEmpty()) return FriendshipStatus.FRIENDS
 
-            // Check pending requests
-            val sentRequests = postgrest.from("friend_requests")
+            // Check all friend requests between the two users (both directions)
+            val allRequests = postgrest.from("friend_requests")
                 .select {
                     filter {
-                        eq("sender_id", currentUserId)
-                        eq("receiver_id", otherUserId)
-                        eq("status", "pending")
+                        or {
+                            and {
+                                eq("sender_id", currentUserId)
+                                eq("receiver_id", otherUserId)
+                            }
+                            and {
+                                eq("sender_id", otherUserId)
+                                eq("receiver_id", currentUserId)
+                            }
+                        }
                     }
                 }
                 .decodeList<FriendRequest>()
-            if (sentRequests.isNotEmpty()) return FriendshipStatus.PENDING_SENT
 
-            val receivedRequests = postgrest.from("friend_requests")
-                .select {
-                    filter {
-                        eq("sender_id", otherUserId)
-                        eq("receiver_id", currentUserId)
-                        eq("status", "pending")
-                    }
+            for (request in allRequests) {
+                when {
+                    // Accepted request means friends (even if friendships entry is missing)
+                    request.status == "accepted" -> return FriendshipStatus.FRIENDS
+                    // Pending request sent by current user
+                    request.status == "pending" && request.senderId == currentUserId ->
+                        return FriendshipStatus.PENDING_SENT
+                    // Pending request received by current user
+                    request.status == "pending" && request.receiverId == currentUserId ->
+                        return FriendshipStatus.PENDING_RECEIVED
                 }
-                .decodeList<FriendRequest>()
-            if (receivedRequests.isNotEmpty()) return FriendshipStatus.PENDING_RECEIVED
+            }
 
             FriendshipStatus.NONE
         } catch (e: Exception) {

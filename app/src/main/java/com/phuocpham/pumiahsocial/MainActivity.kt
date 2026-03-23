@@ -119,12 +119,14 @@ fun PumiahSocialMainContent() {
                         BottomNavigationBar(
                             currentRoute = currentRoute,
                             onItemSelected = { item ->
-                                navController.navigate(item.route) {
-                                    popUpTo(navController.graph.findStartDestination().id) {
-                                        saveState = true
+                                if (currentRoute != item.route) {
+                                    navController.navigate(item.route) {
+                                        popUpTo(Screen.Feed.route) {
+                                            saveState = true
+                                        }
+                                        launchSingleTop = true
+                                        restoreState = true
                                     }
-                                    launchSingleTop = true
-                                    restoreState = true
                                 }
                             },
                             notificationBadgeCount = unreadCount

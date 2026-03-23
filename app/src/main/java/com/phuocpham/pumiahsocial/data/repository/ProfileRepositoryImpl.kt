@@ -71,4 +71,10 @@ class ProfileRepositoryImpl @Inject constructor(
             }
             .decodeList<Profile>()
     }
+
+    override suspend fun getAllProfiles(): Result<List<Profile>> = safeApiCall {
+        postgrest.from("profiles")
+            .select()
+            .decodeList<Profile>()
+    }
 }
