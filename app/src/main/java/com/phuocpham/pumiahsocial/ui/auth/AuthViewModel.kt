@@ -37,7 +37,7 @@ class AuthViewModel @Inject constructor(
             _errorMessage.value = null
             authRepository.signIn(email, password).fold(
                 onSuccess = { /* Auth state will update automatically */ },
-                onFailure = { _errorMessage.value = it.message ?: "Đăng nhập thất bại" }
+                onFailure = { _errorMessage.value = toFriendlyError(it) }
             )
             _isLoading.value = false
         }
@@ -61,9 +61,28 @@ class AuthViewModel @Inject constructor(
             _errorMessage.value = null
             authRepository.signUp(email, password).fold(
                 onSuccess = { /* Auth state will update automatically */ },
-                onFailure = { _errorMessage.value = it.message ?: "Đăng ký thất bại" }
+                onFailure = { _errorMessage.value = toFriendlyError(it) }
             )
             _isLoading.value = false
+        }
+    }
+
+    private fun toFriendlyError(error: Throwable): String {
+        val msg = error.message?.lowercase() ?: return "Đã xảy ra lỗi, vui lòng thử lại"
+        return when {
+            "invalid_credentials" in msg || "invalid login" in msg ->
+                "Email hoặc mật khẩu không đúng"
+            "email_not_confirmed" in msg ->
+                "Email chưa được xác nhận, vui lòng kiểm tra hộp thư"
+            "user_already_exists" in msg || "already registered" in msg ->
+                "Email này đã được đăng ký"
+            "over_email_send_rate_limit" in msg || "rate limit" in msg ->
+                "Gửi quá nhiều yêu cầu, vui lòng thử lại sau vài phút"
+            "weak_password" in msg || "password" in msg && "short" in msg ->
+                "Mật khẩu quá yếu, vui lòng chọn mật khẩu mạnh hơn"
+            "network" in msg || "timeout" in msg || "connect" in msg ->
+                "Không thể kết nối, vui lòng kiểm tra mạng"
+            else -> "Đã xảy ra lỗi, vui lòng thử lại"
         }
     }
 
