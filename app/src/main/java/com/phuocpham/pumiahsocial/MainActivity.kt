@@ -15,8 +15,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -31,6 +35,7 @@ import com.phuocpham.pumiahsocial.navigation.BottomNavItem
 import com.phuocpham.pumiahsocial.navigation.PumiahNavGraph
 import com.phuocpham.pumiahsocial.navigation.Screen
 import com.phuocpham.pumiahsocial.ui.auth.AuthViewModel
+import com.phuocpham.pumiahsocial.ui.profile.ProfileCheckViewModel
 import com.phuocpham.pumiahsocial.ui.components.BottomNavigationBar
 import com.phuocpham.pumiahsocial.ui.components.LoadingIndicator
 import com.phuocpham.pumiahsocial.ui.notifications.NotificationsViewModel
@@ -109,6 +114,28 @@ fun PumiahSocialMainContent() {
             )
         }
         is AuthState.Authenticated -> {
+            val authenticated = authState as AuthState.Authenticated
+            var profileLoaded by remember { mutableStateOf(false) }
+            var hasProfile by remember { mutableStateOf(true) }
+            val profileViewModel: ProfileCheckViewModel = hiltViewModel()
+            val profileState by profileViewModel.hasProfile.collectAsState()
+
+            LaunchedEffect(authenticated.userId) {
+                profileViewModel.checkProfile(authenticated.userId)
+            }
+
+            LaunchedEffect(profileState) {
+                if (profileState != null) {
+                    hasProfile = profileState!!
+                    profileLoaded = true
+                }
+            }
+
+            if (!profileLoaded) {
+                LoadingIndicator()
+            } else {
+                val startDest = if (hasProfile) Screen.Feed.route else Screen.CreateProfile.route
+
             Scaffold(
                 modifier = Modifier.fillMaxSize(),
                 bottomBar = {
@@ -135,9 +162,10 @@ fun PumiahSocialMainContent() {
             ) { innerPadding ->
                 PumiahNavGraph(
                     navController = navController,
-                    startDestination = Screen.Feed.route
+                    startDestination = startDest
                 )
             }
+            } // end else (profileLoaded)
         }
     }
 }

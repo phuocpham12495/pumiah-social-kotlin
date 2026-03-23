@@ -4,6 +4,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
@@ -24,6 +26,7 @@ import com.phuocpham.pumiahsocial.util.formatRelativeTime
 @Composable
 fun ConversationsListScreen(
     onNavigateToChat: (String) -> Unit,
+    onNavigateToNewConversation: () -> Unit,
     viewModel: ConversationsViewModel = hiltViewModel()
 ) {
     val conversations by viewModel.conversations.collectAsState()
@@ -33,6 +36,11 @@ fun ConversationsListScreen(
     Scaffold(
         topBar = {
             TopAppBar(title = { Text("Tin nhắn") })
+        },
+        floatingActionButton = {
+            FloatingActionButton(onClick = onNavigateToNewConversation) {
+                Icon(Icons.Default.Edit, contentDescription = "Tin nhắn mới")
+            }
         }
     ) { padding ->
         PullToRefreshBox(

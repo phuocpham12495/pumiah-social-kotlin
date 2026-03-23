@@ -21,11 +21,17 @@ class EditProfileViewModel @Inject constructor(
     private val _name = MutableStateFlow("")
     val name: StateFlow<String> = _name.asStateFlow()
 
+    private val _username = MutableStateFlow("")
+    val username: StateFlow<String> = _username.asStateFlow()
+
     private val _bio = MutableStateFlow("")
     val bio: StateFlow<String> = _bio.asStateFlow()
 
     private val _location = MutableStateFlow("")
     val location: StateFlow<String> = _location.asStateFlow()
+
+    private val _dateOfBirth = MutableStateFlow("")
+    val dateOfBirth: StateFlow<String> = _dateOfBirth.asStateFlow()
 
     private val _avatarUrl = MutableStateFlow<String?>(null)
     val avatarUrl: StateFlow<String?> = _avatarUrl.asStateFlow()
@@ -55,19 +61,26 @@ class EditProfileViewModel @Inject constructor(
                 onSuccess = { profile ->
                     currentProfile = profile
                     _name.value = profile.name ?: ""
+                    _username.value = profile.username
                     _bio.value = profile.bio ?: ""
                     _location.value = profile.location ?: ""
                     _avatarUrl.value = profile.avatarUrl
                     _coverPhotoUrl.value = profile.coverPhotoUrl
+                    _dateOfBirth.value = profile.dateOfBirth ?: ""
                 },
-                onFailure = { _errorMessage.value = it.message }
+                onFailure = {
+                    // New user — no profile row yet, create a default placeholder
+                    currentProfile = Profile(id = userId)
+                }
             )
         }
     }
 
     fun updateName(value: String) { _name.value = value }
+    fun updateUsername(value: String) { _username.value = value }
     fun updateBio(value: String) { _bio.value = value }
     fun updateLocation(value: String) { _location.value = value }
+    fun updateDateOfBirth(value: String) { _dateOfBirth.value = value }
 
     fun uploadAvatar(imageBytes: ByteArray, fileName: String) {
         viewModelScope.launch {
@@ -90,16 +103,21 @@ class EditProfileViewModel @Inject constructor(
     }
 
     fun saveProfile() {
-        val profile = currentProfile ?: return
+        val profile = currentProfile ?: run {
+            _errorMessage.value = "Đang tải hồ sơ, vui lòng thử lại"
+            return
+        }
         viewModelScope.launch {
             _isSaving.value = true
             _errorMessage.value = null
             val updated = profile.copy(
                 name = _name.value.ifBlank { null },
+                username = _username.value.ifBlank { profile.username },
                 bio = _bio.value.ifBlank { null },
                 location = _location.value.ifBlank { null },
                 avatarUrl = _avatarUrl.value,
-                coverPhotoUrl = _coverPhotoUrl.value
+                coverPhotoUrl = _coverPhotoUrl.value,
+                dateOfBirth = _dateOfBirth.value.ifBlank { null }
             )
             profileRepository.updateProfile(updated).fold(
                 onSuccess = { _saveSuccess.value = true },

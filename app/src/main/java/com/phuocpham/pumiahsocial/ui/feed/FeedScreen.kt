@@ -10,6 +10,7 @@ import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.*
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
@@ -32,6 +33,11 @@ fun FeedScreen(
     val isRefreshing by viewModel.isRefreshing.collectAsState()
     val pullToRefreshState = rememberPullToRefreshState()
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+
+    // Reload feed when screen appears (handles navigation from CreateProfile)
+    LaunchedEffect(Unit) {
+        viewModel.loadFeed()
+    }
 
     Scaffold(
         topBar = {

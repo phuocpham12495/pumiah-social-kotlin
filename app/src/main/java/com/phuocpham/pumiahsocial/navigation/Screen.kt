@@ -18,6 +18,7 @@ sealed class Screen(val route: String) {
         fun createRoute(userId: String) = "user_profile/$userId"
     }
     data object EditProfile : Screen("edit_profile")
+    data object CreateProfile : Screen("create_profile")
 
     // Friends
     data object FriendsList : Screen("friends_list")
@@ -28,6 +29,7 @@ sealed class Screen(val route: String) {
 
     // Messaging
     data object Conversations : Screen("conversations")
+    data object NewConversation : Screen("new_conversation")
     data object Chat : Screen("chat/{conversationId}") {
         fun createRoute(conversationId: String) = "chat/$conversationId"
     }

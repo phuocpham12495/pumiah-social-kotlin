@@ -15,7 +15,9 @@ import com.phuocpham.pumiahsocial.ui.friends.FriendRequestsScreen
 import com.phuocpham.pumiahsocial.ui.friends.FriendsListScreen
 import com.phuocpham.pumiahsocial.ui.messaging.ChatScreen
 import com.phuocpham.pumiahsocial.ui.messaging.ConversationsListScreen
+import com.phuocpham.pumiahsocial.ui.messaging.NewConversationScreen
 import com.phuocpham.pumiahsocial.ui.notifications.NotificationsScreen
+import com.phuocpham.pumiahsocial.ui.profile.CreateProfileScreen
 import com.phuocpham.pumiahsocial.ui.profile.EditProfileScreen
 import com.phuocpham.pumiahsocial.ui.profile.ProfileScreen
 import com.phuocpham.pumiahsocial.ui.search.SearchScreen
@@ -45,7 +47,7 @@ fun PumiahNavGraph(
             SignUpScreen(
                 onNavigateToLogin = { navController.popBackStack() },
                 onSignUpSuccess = {
-                    navController.navigate(Screen.EditProfile.route) {
+                    navController.navigate(Screen.CreateProfile.route) {
                         popUpTo(Screen.SignUp.route) { inclusive = true }
                     }
                 }
@@ -118,6 +120,15 @@ fun PumiahNavGraph(
                 onNavigateBack = { navController.popBackStack() }
             )
         }
+        composable(Screen.CreateProfile.route) {
+            CreateProfileScreen(
+                onProfileCreated = {
+                    navController.navigate(Screen.Feed.route) {
+                        popUpTo(Screen.CreateProfile.route) { inclusive = true }
+                    }
+                }
+            )
+        }
 
         // Friends
         composable(Screen.FriendsList.route) {
@@ -158,6 +169,19 @@ fun PumiahNavGraph(
             ConversationsListScreen(
                 onNavigateToChat = { conversationId ->
                     navController.navigate(Screen.Chat.createRoute(conversationId))
+                },
+                onNavigateToNewConversation = {
+                    navController.navigate(Screen.NewConversation.route)
+                }
+            )
+        }
+        composable(Screen.NewConversation.route) {
+            NewConversationScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToChat = { conversationId ->
+                    navController.navigate(Screen.Chat.createRoute(conversationId)) {
+                        popUpTo(Screen.Conversations.route)
+                    }
                 }
             )
         }

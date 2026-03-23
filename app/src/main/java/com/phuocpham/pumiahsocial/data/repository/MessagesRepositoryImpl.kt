@@ -104,33 +104,24 @@ class MessagesRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getOrCreateConversation(otherUserId: String): Result<String> = safeApiCall {
-        // Check both orderings
-        val existing1 = postgrest.from("conversations")
+        // Enforce ordered IDs (user1_id < user2_id) per DB constraint
+        val (u1, u2) = if (currentUserId < otherUserId) currentUserId to otherUserId else otherUserId to currentUserId
+
+        val existing = postgrest.from("conversations")
             .select {
                 filter {
-                    eq("user1_id", currentUserId)
-                    eq("user2_id", otherUserId)
+                    eq("user1_id", u1)
+                    eq("user2_id", u2)
                 }
             }
             .decodeList<Conversation>()
 
-        if (existing1.isNotEmpty()) return@safeApiCall existing1.first().id
+        if (existing.isNotEmpty()) return@safeApiCall existing.first().id
 
-        val existing2 = postgrest.from("conversations")
-            .select {
-                filter {
-                    eq("user1_id", otherUserId)
-                    eq("user2_id", currentUserId)
-                }
-            }
-            .decodeList<Conversation>()
-
-        if (existing2.isNotEmpty()) return@safeApiCall existing2.first().id
-
-        // Create new conversation
+        // Create new conversation with ordered IDs
         val convo = mapOf(
-            "user1_id" to currentUserId,
-            "user2_id" to otherUserId
+            "user1_id" to u1,
+            "user2_id" to u2
         )
         postgrest.from("conversations").insert(convo) {
             select()

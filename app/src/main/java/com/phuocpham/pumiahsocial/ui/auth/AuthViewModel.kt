@@ -27,6 +27,9 @@ class AuthViewModel @Inject constructor(
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
+    private val _signUpSuccess = MutableStateFlow(false)
+    val signUpSuccess: StateFlow<Boolean> = _signUpSuccess.asStateFlow()
+
     fun login(email: String, password: String) {
         if (email.isBlank() || password.isBlank()) {
             _errorMessage.value = "Vui lòng nhập email và mật khẩu"
@@ -60,7 +63,7 @@ class AuthViewModel @Inject constructor(
             _isLoading.value = true
             _errorMessage.value = null
             authRepository.signUp(email, password).fold(
-                onSuccess = { /* Auth state will update automatically */ },
+                onSuccess = { _signUpSuccess.value = true },
                 onFailure = { _errorMessage.value = toFriendlyError(it) }
             )
             _isLoading.value = false

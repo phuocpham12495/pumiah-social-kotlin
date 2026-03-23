@@ -4,6 +4,9 @@ import com.phuocpham.pumiahsocial.data.local.dao.ProfileDao
 import com.phuocpham.pumiahsocial.data.local.entity.ProfileEntity
 import com.phuocpham.pumiahsocial.data.model.Profile
 import com.phuocpham.pumiahsocial.util.safeApiCall
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
 import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.storage.Storage
@@ -33,9 +36,17 @@ class ProfileRepositoryImpl @Inject constructor(
     }
 
     override suspend fun updateProfile(profile: Profile): Result<Unit> = safeApiCall {
-        postgrest.from("profiles").update(profile) {
-            filter { eq("id", profile.id) }
+        val upsertData = buildJsonObject {
+            put("id", JsonPrimitive(profile.id))
+            put("full_name", profile.name?.let { JsonPrimitive(it) } ?: JsonNull)
+            put("username", JsonPrimitive(profile.username))
+            put("bio", profile.bio?.let { JsonPrimitive(it) } ?: JsonNull)
+            put("location", profile.location?.let { JsonPrimitive(it) } ?: JsonNull)
+            put("profile_photo_url", profile.avatarUrl?.let { JsonPrimitive(it) } ?: JsonNull)
+            put("cover_photo_url", profile.coverPhotoUrl?.let { JsonPrimitive(it) } ?: JsonNull)
+            put("date_of_birth", profile.dateOfBirth?.let { JsonPrimitive(it) } ?: JsonNull)
         }
+        postgrest.from("profiles").upsert(upsertData)
         profileDao.upsertProfile(ProfileEntity.fromProfile(profile))
     }
 
