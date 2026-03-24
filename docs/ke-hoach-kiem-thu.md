@@ -17,8 +17,8 @@
 @Test fun `fetchProfile returns profile from Supabase profiles table`()
 @Test fun `fetchProfile caches to Room via ProfileEntity`()
 @Test fun `updateProfile updates both remote and local`()
-@Test fun `uploadAvatar uploads to avatars bucket and returns public URL`()
-@Test fun `uploadCoverPhoto uploads to covers bucket`()
+@Test fun `uploadAvatar uploads to profile_photos bucket and returns public URL`()
+@Test fun `uploadCoverPhoto uploads to profile_photos bucket`()
 @Test fun `searchProfiles uses ilike on username and full_name`()
 @Test fun `getProfileFlow returns Room Flow mapped to Profile`()
 ```
@@ -41,7 +41,7 @@
 ```kotlin
 @Test fun `getFeedPosts queries friendships table for friend IDs`()
 @Test fun `getFeedPosts filters posts by profile_id in friend IDs`()
-@Test fun `createPost with image uploads to post-images bucket`()
+@Test fun `createPost with image uploads to post_images bucket`()
 @Test fun `createPost sets correct post_type based on content`()
 @Test fun `enrichPosts queries likes with target_type eq post`()
 @Test fun `enrichPosts counts comments by post_id`()
@@ -98,6 +98,36 @@
 @Test fun `isOnline uses distinctUntilChanged`()
 ```
 
+### AuthViewModel (Friendly Errors)
+```kotlin
+@Test fun `toFriendlyError maps invalid_credentials to Vietnamese message`()
+@Test fun `toFriendlyError maps user_already_exists to Vietnamese message`()
+@Test fun `toFriendlyError maps over_email_send_rate_limit to Vietnamese message`()
+@Test fun `toFriendlyError maps network errors to connection message`()
+@Test fun `toFriendlyError returns fallback for unknown errors`()
+@Test fun `signUp success sets signUpSuccess to true`()
+```
+
+### ProfileCheckViewModel
+```kotlin
+@Test fun `checkProfile sets hasProfile true when profile exists`()
+@Test fun `checkProfile sets hasProfile false when profile not found`()
+@Test fun `checkProfile sets isLoading false after check`()
+```
+
+### NotificationsViewModel (Delete All)
+```kotlin
+@Test fun `deleteAllNotifications clears notifications list on success`()
+@Test fun `deleteAllNotifications handles failure gracefully`()
+```
+
+### NewConversationScreen
+```kotlin
+@Test fun `search filter shows matching friends by name`()
+@Test fun `search filter shows matching friends by username`()
+@Test fun `empty search shows all friends`()
+```
+
 ## 2. Integration Tests
 
 ### Supabase Integration
@@ -117,9 +147,10 @@
 1. Mo app -> Hien thi LoginScreen
 2. Nhan "Dang ky" -> SignUpScreen
 3. Nhap email + password -> Dang ky thanh cong
-4. Redirect den FeedScreen (profile tu dong tao voi username tu email)
-5. Vao EditProfileScreen -> Nhap ten, bio, upload avatar
-6. Verify profile hien thi dung
+4. AlertDialog hien thi "Kiem tra email de xac nhan"
+5. Xac nhan email -> Dang nhap -> Redirect den CreateProfileScreen (neu chua co profile)
+6. Nhap ten, username, bio, upload avatar -> Nhan "Hoan tat"
+7. Redirect den FeedScreen, profile hien thi dung
 
 ### Flow 2: Ket ban va Xem Feed
 1. Dang nhap -> FeedScreen (trong)
@@ -152,7 +183,7 @@
 ### Flow 6: Image Picker
 1. Vao EditProfileScreen -> Nhan "Doi anh dai dien"
 2. Gallery picker mo -> Chon anh
-3. Anh upload len Supabase Storage (avatars bucket)
+3. Anh upload len Supabase Storage (profile_photos bucket)
 4. Avatar cap nhat
 5. Tuong tu cho cover photo va anh bai viet
 
@@ -225,6 +256,12 @@ jobs:
 | TC-US016-001 | Notification like | San sang test |
 | TC-US017-001 | Gui tin nhan | San sang test |
 | TC-US017-002 | Gui tin nhan tu profile | San sang test |
+| TC-US017-003 | Tim kiem ban be khi tao tin nhan moi | San sang test |
+| TC-US019-004 | Signup hien dialog xac nhan email | San sang test |
+| TC-US020-004 | Login friendly error messages | San sang test |
+| TC-US001-003 | Tao profile moi (CreateProfileScreen) | San sang test |
+| TC-US001-004 | Redirect tao profile khi chua co | San sang test |
+| TC-US016-004 | Xoa tat ca thong bao | San sang test |
 | TC-US021-001 | Dark mode toggle | San sang test |
 | TC-US021-004 | Notification preferences | San sang test |
 | TC-US023-001 | Offline banner | San sang test |

@@ -1,14 +1,14 @@
 {
   "tienTrinh": {
-    "tongQuan": "90%",
-    "ghiChu": "MVP hoan thanh + bo sung image picker, search, dark mode, offline banner, notification prefs, schema fix. Con thieu: realtime WebSocket, pagination, unit testing, R8 release build"
+    "tongQuan": "95%",
+    "ghiChu": "MVP hoan thanh day du. Bo sung: friendly errors, password toggle, email confirm dialog, create profile redirect, clear notifications, new conversation search, storage bucket fix, styled inputs. Con thieu: realtime WebSocket, pagination, unit testing, R8 release build"
   },
   "khaiNiem": [
     {
       "ten": "Jetpack Compose",
       "moTa": "Declarative UI framework cho Android",
       "tienDo": "92%",
-      "kyNang": ["@Composable functions", "State management", "LazyColumn", "Navigation", "Material3", "AnimatedVisibility", "PullToRefreshBox", "rememberLauncherForActivityResult"]
+      "kyNang": ["@Composable functions", "State management", "LazyColumn", "Navigation", "Material3", "AnimatedVisibility", "PullToRefreshBox", "rememberLauncherForActivityResult", "AlertDialog", "VisualTransformation (password toggle)", "TextField styling (filled, rounded)"]
     },
     {
       "ten": "MVVM Architecture",
@@ -26,7 +26,7 @@
       "ten": "Supabase SDK",
       "moTa": "Backend-as-a-Service client v3.1.1",
       "tienDo": "82%",
-      "kyNang": ["GoTrue Auth", "Postgrest CRUD", "Postgrest ilike search", "Storage uploads", "Realtime (co ban)", "@SerialName mapping", "Schema verification via REST API"]
+      "kyNang": ["GoTrue Auth", "Postgrest CRUD", "Postgrest ilike search", "Storage uploads (profile_photos, post_images buckets)", "Realtime (co ban)", "@SerialName mapping", "Schema verification via REST API", "RLS policy management", "buildJsonObject for upsert"]
     },
     {
       "ten": "Room Database",
@@ -74,7 +74,7 @@
       "ten": "Kotlinx Serialization",
       "moTa": "JSON serialization/deserialization v1.7.3",
       "tienDo": "85%",
-      "kyNang": ["@Serializable", "@SerialName", "decodeList", "decodeSingle", "Default values cho optional fields"]
+      "kyNang": ["@Serializable", "@SerialName", "decodeList", "decodeSingle", "Default values cho optional fields", "buildJsonObject", "JsonPrimitive", "JsonNull"]
     }
   ],
   "khoangTrong": [
@@ -122,14 +122,14 @@
   ],
   "thongKeDuAn": {
     "ngayBatDau": "2026-03-22",
-    "ngayCapNhat": "2026-03-22",
-    "tongSoFiles": "60+",
-    "viewModels": 12,
+    "ngayCapNhat": "2026-03-24",
+    "tongSoFiles": "65+",
+    "viewModels": 14,
     "repositories": 7,
     "roomEntities": 5,
     "roomDAOs": 4,
     "hiltModules": 4,
-    "uiScreens": 15,
+    "uiScreens": 17,
     "sharedComponents": 6,
     "apkSize": "21.4 MB (debug)",
     "buildTime": "~83s (cold)"

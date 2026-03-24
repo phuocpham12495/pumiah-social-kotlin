@@ -56,8 +56,8 @@ class ProfileRepositoryImpl @Inject constructor(
         fileName: String
     ): Result<String> = safeApiCall {
         val path = "$userId/$fileName"
-        storage.from("avatars").upload(path, imageBytes) { upsert = true }
-        storage.from("avatars").publicUrl(path)
+        storage.from("profile_photos").upload(path, imageBytes) { upsert = true }
+        storage.from("profile_photos").publicUrl(path)
     }
 
     override suspend fun uploadCoverPhoto(
@@ -66,8 +66,8 @@ class ProfileRepositoryImpl @Inject constructor(
         fileName: String
     ): Result<String> = safeApiCall {
         val path = "$userId/$fileName"
-        storage.from("covers").upload(path, imageBytes) { upsert = true }
-        storage.from("covers").publicUrl(path)
+        storage.from("profile_photos").upload(path, imageBytes) { upsert = true }
+        storage.from("profile_photos").publicUrl(path)
     }
 
     override suspend fun searchProfiles(query: String): Result<List<Profile>> = safeApiCall {

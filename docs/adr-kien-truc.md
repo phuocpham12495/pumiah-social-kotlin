@@ -250,3 +250,86 @@ Su dung `@SerialName` annotation cua Kotlinx Serialization de map giua Kotlin pr
 ### Bai hoc
 - Luon verify schema bang Supabase REST API (`/rest/v1/`) truoc khi code
 - Khong gia dinh ten cot tu documentation hoac convention
+
+---
+
+## ADR-013: Profile Check Redirect Pattern
+**Trang thai:** Duoc chap nhan
+**Ngay:** 2026-03-23
+
+### Boi canh
+User moi sau dang ky co account nhung chua co profile. Can redirect den man hinh tao profile.
+
+### Quyet dinh
+- Tao `ProfileCheckViewModel` kiem tra profile ton tai trong Supabase
+- Trong `MainActivity`, sau khi `AuthState.Authenticated`, kiem tra profile
+- Neu chua co profile -> `startDestination = Screen.CreateProfile.route`
+- Neu da co -> `startDestination = Screen.Feed.route`
+- `CreateProfileScreen` dung chung `EditProfileViewModel` de tranh duplicate logic
+
+### Danh doi
+- (+) Reuse ViewModel, khong duplicate code
+- (+) User experience muot (redirect tu dong)
+- (-) Them 1 API call khi khoi dong app (kiem tra profile)
+
+---
+
+## ADR-014: Supabase Storage Bucket Naming
+**Trang thai:** Duoc chap nhan
+**Ngay:** 2026-03-24
+
+### Boi canh
+Upload anh that bai vi code dung sai ten bucket. Supabase dashboard cho thay buckets la `profile_photos` va `post_images`, nhung code dung `avatars`, `covers`, `post-images`.
+
+### Quyet dinh
+- Avatar va cover photo deu upload vao bucket `profile_photos`
+- Post images upload vao bucket `post_images`
+- Path format: `{userId}/{filename}` (vd: `abc123/avatar_1711234567.jpg`)
+
+### Bai hoc
+- Luon kiem tra ten bucket thuc te tren Supabase dashboard truoc khi code
+- Bucket names dung underscore (`_`), khong dung dash (`-`)
+
+---
+
+## ADR-015: Friendly Error Messages Pattern
+**Trang thai:** Duoc chap nhan
+**Ngay:** 2026-03-23
+
+### Boi canh
+Supabase tra ve raw error messages bao gom URLs, tokens, HTTP headers -> khong phu hop hien thi cho user.
+
+### Quyet dinh
+- Tao `toFriendlyError()` extension function trong AuthViewModel
+- Map Supabase error keywords sang thong bao tieng Viet
+- Pattern: kiem tra `message.contains(keyword)` -> tra ve friendly message
+- Fallback: "Da xay ra loi, vui long thu lai"
+
+### Danh doi
+- (+) UX tot hon, khong lo thong tin ky thuat
+- (-) Can cap nhat mapping khi Supabase thay doi error format
+
+---
+
+## ADR-016: buildJsonObject thay vi mapOf cho Postgrest Upsert
+**Trang thai:** Duoc chap nhan
+**Ngay:** 2026-03-23
+
+### Boi canh
+`ProfileRepositoryImpl.updateProfile()` dung `mapOf<String, Any?>` de tao JSON body cho Postgrest upsert. Kotlinx Serialization khong co serializer cho `Any` type -> crash runtime.
+
+### Quyet dinh
+Su dung `buildJsonObject` voi `JsonPrimitive` tu `kotlinx.serialization.json`:
+```kotlin
+val data = buildJsonObject {
+    put("id", JsonPrimitive(profile.id))
+    put("full_name", profile.name?.let { JsonPrimitive(it) } ?: JsonNull)
+    // ...
+}
+postgrest.from("profiles").upsert(data)
+```
+
+### Ly do
+- `buildJsonObject` tao `JsonObject` truc tiep, khong can serializer cho `Any`
+- Type-safe: chi chap nhan `JsonElement` (JsonPrimitive, JsonNull, JsonObject, JsonArray)
+- Xu ly nullable fields dung `JsonNull`

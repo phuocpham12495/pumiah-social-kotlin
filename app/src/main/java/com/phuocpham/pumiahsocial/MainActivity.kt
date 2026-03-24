@@ -160,10 +160,12 @@ fun PumiahSocialMainContent() {
                     }
                 }
             ) { innerPadding ->
-                PumiahNavGraph(
-                    navController = navController,
-                    startDestination = startDest
-                )
+                Box(modifier = Modifier.padding(innerPadding)) {
+                    PumiahNavGraph(
+                        navController = navController,
+                        startDestination = startDest
+                    )
+                }
             }
             } // end else (profileLoaded)
         }

@@ -136,3 +136,50 @@ Khi chay app tren thiet bi that, gap nhieu loi runtime do ten bang va ten cot tr
 - Build thanh cong: `./gradlew assembleDebug` PASSED
 - APK debug: 21.4 MB
 - Thoi gian build (cold): ~1 phut 23 giay
+
+## Giai Doan 12: UX Improvements & Bug Fixes
+**Thoi gian:** 2026-03-23 ~ 2026-03-24
+
+### 12.1 Friendly Error Messages
+- **Hanh dong:** Them `toFriendlyError()` trong AuthViewModel
+- **Ly do:** Supabase tra ve raw error voi URLs/tokens, khong phu hop hien thi cho user
+- **Mapping:** `invalid_credentials` -> "Email hoac mat khau khong dung", `user_already_exists` -> "Email nay da duoc dang ky", `over_email_send_rate_limit` -> "Gui qua nhieu yeu cau", network errors -> "Khong the ket noi"
+
+### 12.2 Password Visibility Toggle
+- **Hanh dong:** Them eye icon toggle cho tat ca password fields (Login, SignUp)
+- **Ly do:** UX tieu chuan, giup user xac nhan mat khau da nhap
+
+### 12.3 Signup Email Confirmation
+- **Hanh dong:** Them AlertDialog sau khi dang ky thanh cong
+- **Ly do:** Supabase gui email xac nhan nhung app khong thong bao user -> user khong biet can check email
+
+### 12.4 Create Profile Screen + Redirect
+- **Hanh dong:** Tao CreateProfileScreen, ProfileCheckViewModel, redirect tu MainActivity
+- **Ly do:** User moi sau dang ky chua co profile -> can man hinh tao profile rieng
+- **Quyet dinh:** Dung EditProfileViewModel chung cho ca CreateProfile va EditProfile
+
+### 12.5 Clear All Notifications
+- **Hanh dong:** Them nut xoa tat ca thong bao + AlertDialog xac nhan
+- **Ly do:** User can don dep thong bao cu
+- **Bug fix:** Can them DELETE RLS policy tren Supabase (`supabase/add_delete_notifications_policy.sql`)
+
+### 12.6 New Conversation Screen
+- **Hanh dong:** Tao NewConversationScreen + NewConversationViewModel
+- **Ly do:** User can chon ban be de bat dau cuoc hoi thoai moi tu tab Tin nhan
+- **Cai tien:** Them search filter de loc ban be theo ten/username
+
+### 12.7 Storage Bucket Fix
+- **Hanh dong:** Sua ten bucket trong ProfileRepositoryImpl va PostsRepositoryImpl
+- **Ly do:** Code dung sai ten bucket (`avatars`, `covers`, `post-images`) -> upload that bai
+- **Sua doi:**
+  - `avatars` -> `profile_photos`
+  - `covers` -> `profile_photos`
+  - `post-images` -> `post_images`
+
+### 12.8 Styled Input Fields
+- **Hanh dong:** Chuyen tat ca input sang filled TextField voi RoundedCornerShape, transparent indicators
+- **Ly do:** Thong nhat giao dien theo Material3 design reference
+
+### 12.9 Serialization Fix
+- **Hanh dong:** Chuyen `mapOf<String, Any?>` sang `buildJsonObject` voi `JsonPrimitive` trong ProfileRepositoryImpl.updateProfile
+- **Ly do:** Kotlinx Serialization khong ho tro serialize `Any` type

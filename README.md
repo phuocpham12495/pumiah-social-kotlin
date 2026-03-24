@@ -80,12 +80,12 @@ app/src/main/java/com/phuocpham/pumiahsocial/
 │       ├── dao/                 # 4 DAOs
 │       └── entity/              # 5 Room entities
 ├── ui/
-│   ├── auth/                    # Dang nhap/Dang ky
+│   ├── auth/                    # Dang nhap/Dang ky (friendly errors, password toggle, email confirm)
 │   ├── feed/                    # Bang tin + Tao bai viet (image picker)
-│   ├── profile/                 # Ho so (image picker cho avatar/cover)
+│   ├── profile/                 # Ho so + Tao ho so moi (avatar/cover upload)
 │   ├── friends/                 # Ban be (remove friend tu danh sach)
-│   ├── notifications/           # Thong bao
-│   ├── messaging/               # Nhan tin
+│   ├── notifications/           # Thong bao (+ xoa tat ca)
+│   ├── messaging/               # Nhan tin + Tao cuoc hoi thoai moi (search filter)
 │   ├── search/                  # Tim kiem nguoi dung (debounced)
 │   ├── settings/                # Cai dat (dark mode, notification prefs)
 │   ├── components/              # 6 UI components dung chung
@@ -108,6 +108,13 @@ app/src/main/java/com/phuocpham/pumiahsocial/
 | messages | id, conversation_id, sender_id, content, is_read, created_at |
 | notifications | id, recipient_id, sender_id, type, message, target_url, is_read, created_at |
 
+## Supabase Storage Buckets
+
+| Bucket | Cong khai | Muc dich |
+|--------|-----------|----------|
+| profile_photos | Co | Avatar va cover photo |
+| post_images | Co | Anh bai viet |
+
 ## Khac Phuc Su Co
 
 ### Gradle sync that bai
@@ -126,3 +133,12 @@ app/src/main/java/com/phuocpham/pumiahsocial/
 ### Loi "column does not exist"
 - Kiem tra `@SerialName` annotations trong data models
 - So sanh voi schema thuc te qua Supabase REST API endpoint
+
+### Loi upload anh (Loi tai anh dai dien / Loi tai anh bia)
+- Kiem tra ten bucket trong code khop voi Supabase Storage dashboard
+- Bucket dung: `profile_photos` (avatar + cover), `post_images` (bai viet)
+- Kiem tra RLS policies tren Storage buckets
+
+### Loi "Serializer for class 'Any' is not found"
+- Khong dung `mapOf<String, Any?>` voi Postgrest
+- Dung `buildJsonObject` voi `JsonPrimitive` thay the

@@ -10,11 +10,14 @@ MainActivity.kt (@AndroidEntryPoint)
     ├── AuthViewModel.authState -> Loading/Unauthenticated/Authenticated
     │
     ├── [Unauthenticated] -> PumiahNavGraph(startDestination = "login")
-    │   ├── LoginScreen -> AuthViewModel.login()
-    │   └── SignUpScreen -> AuthViewModel.signUp()
+    │   ├── LoginScreen -> AuthViewModel.login() (friendly errors, password toggle)
+    │   └── SignUpScreen -> AuthViewModel.signUp() (email confirm dialog, password toggle)
     │
-    └── [Authenticated] -> Scaffold + BottomNavigationBar
-        └── PumiahNavGraph(startDestination = "feed")
+    └── [Authenticated] -> ProfileCheckViewModel -> hasProfile?
+        ├── [No profile] -> PumiahNavGraph(startDestination = "create_profile")
+        │   └── CreateProfileScreen -> EditProfileViewModel (shared)
+        └── [Has profile] -> Scaffold + BottomNavigationBar
+            └── PumiahNavGraph(startDestination = "feed")
             ├── FeedScreen -> FeedViewModel
             │   ├── PostCard (shared component, clickable links)
             │   └── Search icon -> SearchScreen
@@ -24,6 +27,7 @@ MainActivity.kt (@AndroidEntryPoint)
             ├── FriendRequestsScreen -> FriendsViewModel
             ├── NotificationsScreen -> NotificationsViewModel
             ├── ConversationsListScreen -> ConversationsViewModel
+            │   ├── NewConversationScreen -> NewConversationViewModel (search filter)
             │   └── ChatScreen -> ChatViewModel (polling 3s)
             ├── ProfileScreen -> ProfileViewModel
             │   ├── EditProfileScreen -> EditProfileViewModel (image picker)
@@ -214,6 +218,7 @@ val imagePickerLauncher = rememberLauncherForActivityResult(
     }
 }
 // Goi: imagePickerLauncher.launch("image/*")
+// Upload den bucket "profile_photos" (avatar + cover) hoac "post_images" (bai viet)
 ```
 -> Compose-friendly, lifecycle-aware image selection
 
@@ -265,6 +270,8 @@ fun updateQuery(value: String) {
 | `conversations` | ConversationsListScreen | - |
 | `chat/{conversationId}` | ChatScreen | conversationId: String |
 | `search` | SearchScreen | - |
+| `create_profile` | CreateProfileScreen | - |
+| `new_conversation` | NewConversationScreen | - |
 | `settings` | SettingsScreen | - |
 
 ## 7. Dependency Injection Graph

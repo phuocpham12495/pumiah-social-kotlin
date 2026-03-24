@@ -75,8 +75,8 @@ class PostsRepositoryImpl @Inject constructor(
         var imageUrl: String? = null
         if (imageBytes != null && imageName != null) {
             val path = "$currentUserId/$imageName"
-            storage.from("post-images").upload(path, imageBytes) { upsert = true }
-            imageUrl = storage.from("post-images").publicUrl(path)
+            storage.from("post_images").upload(path, imageBytes) { upsert = true }
+            imageUrl = storage.from("post_images").publicUrl(path)
         }
 
         val postType = when {

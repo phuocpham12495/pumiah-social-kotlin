@@ -45,6 +45,19 @@
 | Fix isOwnComment bug | feed | Hoan thanh |
 | Fix schema mismatch (friends->friendships, author_id->profile_id, etc.) | data | Hoan thanh |
 
+### P2.6 - Da bo sung (UX Improvements 2026-03-23~24)
+| Tinh nang | Module | Trang thai |
+|-----------|--------|------------|
+| Friendly error messages (Vietnamese) | auth | Hoan thanh |
+| Password visibility toggle (eye icon) | auth | Hoan thanh |
+| Signup email confirmation dialog | auth | Hoan thanh |
+| Create profile screen + redirect | profile | Hoan thanh |
+| Clear all notifications + RLS policy | notifications | Hoan thanh |
+| New conversation screen voi search filter | messaging | Hoan thanh |
+| Storage bucket fix (profile_photos, post_images) | data | Hoan thanh |
+| Styled filled TextFields (Material3) | ui | Hoan thanh |
+| buildJsonObject fix (Kotlinx Serialization) | data | Hoan thanh |
+
 ### P3 - Tuong lai
 | Tinh nang | Module | Trang thai |
 |-----------|--------|------------|
@@ -105,13 +118,13 @@ comments ----< likes (target_id where target_type='comment')
 
 | Metric | Gia tri |
 |--------|---------|
-| Tong so file Kotlin | ~60+ |
-| ViewModels | 12 |
+| Tong so file Kotlin | ~65+ |
+| ViewModels | 14 |
 | Repository interfaces | 7 |
 | Room Entities | 5 |
 | Room DAOs | 4 |
 | Hilt Modules | 4 |
-| UI Screens | 15+ |
+| UI Screens | 17+ |
 | Shared Components | 6 |
 | APK size (debug) | 21.4 MB |
 | Build time (cold) | ~83s |

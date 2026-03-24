@@ -67,6 +67,16 @@
 - Doc bytes tu ContentResolver (streaming, khong buffer toan bo trong memory)
 - Ten file unique (timestamp-based) tranh cache conflicts
 
+### 9. Error Handling UX
+- Friendly Vietnamese error messages thay vi raw Supabase errors
+- toFriendlyError() pattern: keyword matching -> localized message
+- Fallback message cho unknown errors
+
+### 10. Storage Upload
+- Bucket `profile_photos` cho avatar + cover photo (chung 1 bucket)
+- Bucket `post_images` cho anh bai viet
+- Upsert mode: ghi de file cu neu trung path
+
 ## De Xuat Toi Uu Tiep Theo
 - Bat R8/ProGuard cho release build de giam kich thuoc APK
 - Su dung Paging3 cho feed pagination thay vi limit(50) co dinh
