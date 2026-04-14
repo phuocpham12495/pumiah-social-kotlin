@@ -9,7 +9,6 @@ data class Notification(
     @SerialName("recipient_id") val recipientId: String = "",
     @SerialName("sender_id") val senderId: String? = null,
     val type: String = "",
-    @SerialName("target_url") val targetUrl: String? = null,
     val message: String? = null,
     @SerialName("is_read") val isRead: Boolean = false,
     @SerialName("created_at") val createdAt: String = ""

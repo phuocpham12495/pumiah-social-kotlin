@@ -91,7 +91,12 @@ fun SettingsScreen(
             ListItem(
                 headlineContent = { Text("Chế độ tối") },
                 supportingContent = { Text(if (isDarkMode) "Đang bật" else "Đang tắt") },
-                leadingContent = { Icon(Icons.Default.DarkMode, null) },
+                leadingContent = {
+                    Icon(
+                        if (isDarkMode) Icons.Default.DarkMode else Icons.Default.LightMode,
+                        contentDescription = null
+                    )
+                },
                 trailingContent = {
                     Switch(
                         checked = isDarkMode,

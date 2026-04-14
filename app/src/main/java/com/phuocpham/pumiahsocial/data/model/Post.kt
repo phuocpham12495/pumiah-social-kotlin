@@ -12,7 +12,14 @@ data class Post(
     @SerialName("media_url") val imageUrl: String? = null,
     @SerialName("link_url") val linkUrl: String? = null,
     @SerialName("created_at") val createdAt: String = ""
-)
+) {
+    val imageUrls: List<String>
+        get() = imageUrl?.lineSequence()
+            ?.map { it.trim() }
+            ?.filter { it.isNotBlank() }
+            ?.toList()
+            .orEmpty()
+}
 
 data class PostWithDetails(
     val post: Post,

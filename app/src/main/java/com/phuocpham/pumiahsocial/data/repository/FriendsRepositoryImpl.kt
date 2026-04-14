@@ -57,8 +57,7 @@ class FriendsRepositoryImpl @Inject constructor(
                     "recipient_id" to receiverId,
                     "sender_id" to currentUserId,
                     "type" to "friend_request",
-                    "message" to "đã gửi cho bạn lời mời kết bạn",
-                    "target_url" to ""
+                    "message" to "đã gửi cho bạn lời mời kết bạn"
                 )
             )
         } catch (_: Exception) { }
@@ -87,8 +86,7 @@ class FriendsRepositoryImpl @Inject constructor(
                     "recipient_id" to senderId,
                     "sender_id" to currentUserId,
                     "type" to "friend_request",
-                    "message" to "đã chấp nhận lời mời kết bạn của bạn",
-                    "target_url" to ""
+                    "message" to "đã chấp nhận lời mời kết bạn của bạn"
                 )
             )
         } catch (_: Exception) { }

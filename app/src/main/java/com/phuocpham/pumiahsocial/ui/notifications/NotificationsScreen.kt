@@ -87,16 +87,7 @@ fun NotificationsScreen(
                             items(state.data, key = { it.notification.id }) { item ->
                                 NotificationItem(
                                     item = item,
-                                    onClick = {
-                                        viewModel.markAsRead(item.notification.id)
-                                        when (item.notification.type) {
-                                            "like_post", "comment_post" -> {
-                                                item.notification.targetUrl?.let { onNavigateToPost(it) }
-                                            }
-                                            "friend_request", "friend_request_received" -> onNavigateToFriendRequests()
-                                            else -> item.notification.senderId?.let { onNavigateToProfile(it) }
-                                        }
-                                    }
+                                    onClick = { viewModel.markAsRead(item.notification.id) }
                                 )
                             }
                         }

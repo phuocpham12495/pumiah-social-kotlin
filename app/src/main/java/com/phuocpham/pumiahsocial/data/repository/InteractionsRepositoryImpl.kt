@@ -55,7 +55,6 @@ class InteractionsRepositoryImpl @Inject constructor(
                         "recipient_id" to authorId,
                         "sender_id" to currentUserId,
                         "type" to "like_post",
-                        "target_url" to postId,
                         "message" to "đã thích bài viết của bạn"
                     )
                 )
@@ -148,7 +147,6 @@ class InteractionsRepositoryImpl @Inject constructor(
                     "recipient_id" to postAuthorId,
                     "sender_id" to currentUserId,
                     "type" to "comment_post",
-                    "target_url" to postId,
                     "message" to "đã bình luận về bài viết của bạn"
                 )
             )

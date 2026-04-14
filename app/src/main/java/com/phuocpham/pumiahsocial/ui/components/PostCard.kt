@@ -4,6 +4,10 @@ import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChatBubbleOutline
 import androidx.compose.material.icons.filled.Favorite
@@ -69,15 +73,28 @@ fun PostCard(
                 )
             }
 
-            // Image
-            if (!post.post.imageUrl.isNullOrBlank()) {
+            // Images (1 or multiple)
+            val urls = post.post.imageUrls
+            if (urls.size == 1) {
                 Spacer(modifier = Modifier.height(8.dp))
                 AsyncImage(
-                    model = post.post.imageUrl,
+                    model = urls.first(),
                     contentDescription = "Ảnh bài viết",
-                    modifier = Modifier.fillMaxWidth().heightIn(max = 300.dp),
+                    modifier = Modifier.fillMaxWidth().heightIn(max = 300.dp).clip(RoundedCornerShape(8.dp)),
                     contentScale = ContentScale.Crop
                 )
+            } else if (urls.size > 1) {
+                Spacer(modifier = Modifier.height(8.dp))
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    items(urls) { url ->
+                        AsyncImage(
+                            model = url,
+                            contentDescription = "Ảnh bài viết",
+                            modifier = Modifier.size(220.dp).clip(RoundedCornerShape(8.dp)),
+                            contentScale = ContentScale.Crop
+                        )
+                    }
+                }
             }
 
             // Link

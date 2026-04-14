@@ -25,13 +25,25 @@ class NotificationsRepositoryImpl @Inject constructor(
     private val _unreadCount = MutableStateFlow(0)
 
     override suspend fun getNotifications(): Result<List<NotificationWithProfile>> = safeApiCall {
-        val notifications = postgrest.from("notifications")
+        val raw = postgrest.from("notifications")
             .select {
                 filter { eq("recipient_id", currentUserId) }
                 order("created_at", Order.DESCENDING)
-                limit(50)
+                limit(100)
             }
             .decodeList<Notification>()
+
+        // Dedupe: group by (sender_id, type) within a 1-minute window,
+        // preferring the Vietnamese variant (message starts with "đã" or contains Vietnamese diacritics).
+        val notifications = raw
+            .groupBy { n ->
+                val bucket = n.createdAt.take(15) // yyyy-MM-ddTHH:mm (minute precision)
+                listOf(n.senderId, n.type, bucket)
+            }
+            .map { (_, group) ->
+                group.firstOrNull { isVietnamese(it.message) } ?: group.first()
+            }
+            .sortedByDescending { it.createdAt }
 
         val senderIds = notifications.mapNotNull { it.senderId }.distinct()
         val profiles = if (senderIds.isNotEmpty()) {
@@ -78,6 +90,12 @@ class NotificationsRepositoryImpl @Inject constructor(
     }
 
     override fun getUnreadCountFlow(): Flow<Int> = _unreadCount
+
+    private fun isVietnamese(message: String?): Boolean {
+        if (message.isNullOrBlank()) return false
+        val vnMarkers = Regex("[đĐàáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹ]")
+        return vnMarkers.containsMatchIn(message) || message.startsWith("đã ")
+    }
 
     override suspend fun refreshUnreadCount() {
         try {

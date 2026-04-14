@@ -4,6 +4,9 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
@@ -12,6 +15,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -29,21 +33,26 @@ fun CreatePostScreen(
     val isPosting by viewModel.isPosting.collectAsState()
     val postSuccess by viewModel.postSuccess.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
-    val selectedImageBytes by viewModel.selectedImageBytes.collectAsState()
+    val selectedImages by viewModel.selectedImages.collectAsState()
 
     val context = LocalContext.current
-    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
 
     val imagePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        uri?.let {
-            selectedImageUri = it
-            val bytes = context.contentResolver.openInputStream(it)?.readBytes()
-            if (bytes != null) {
-                val fileName = "post_${System.currentTimeMillis()}.jpg"
-                viewModel.setSelectedImage(bytes, fileName)
+        contract = ActivityResultContracts.GetMultipleContents()
+    ) { uris: List<Uri> ->
+        if (uris.isNotEmpty()) {
+            val ts = System.currentTimeMillis()
+            val items = uris.mapIndexedNotNull { idx, uri ->
+                val bytes = context.contentResolver.openInputStream(uri)?.readBytes()
+                bytes?.let {
+                    SelectedImage(
+                        bytes = it,
+                        name = "post_${ts}_$idx.jpg",
+                        uriString = uri.toString()
+                    )
+                }
             }
+            viewModel.addImages(items)
         }
     }
 
@@ -101,27 +110,34 @@ fun CreatePostScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            if (selectedImageBytes != null && selectedImageUri != null) {
-                Card(modifier = Modifier.fillMaxWidth()) {
-                    Box {
-                        AsyncImage(
-                            model = selectedImageUri,
-                            contentDescription = "Ảnh đã chọn",
-                            modifier = Modifier.fillMaxWidth().heightIn(max = 200.dp),
-                            contentScale = ContentScale.Crop
-                        )
-                        IconButton(
-                            onClick = {
-                                viewModel.clearSelectedImage()
-                                selectedImageUri = null
-                            },
-                            modifier = Modifier.align(Alignment.TopEnd)
-                        ) {
-                            Icon(
-                                Icons.Default.Close,
-                                contentDescription = "Xóa ảnh",
-                                tint = MaterialTheme.colorScheme.onSurface
+            if (selectedImages.isNotEmpty()) {
+                Text(
+                    text = "Đã chọn ${selectedImages.size}/15 ảnh",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(selectedImages, key = { it.uriString }) { img ->
+                        Box(modifier = Modifier.size(110.dp)) {
+                            AsyncImage(
+                                model = img.uriString,
+                                contentDescription = "Ảnh đã chọn",
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .clip(RoundedCornerShape(8.dp))
                             )
+                            IconButton(
+                                onClick = { viewModel.removeImage(img.uriString) },
+                                modifier = Modifier.align(Alignment.TopEnd).size(28.dp)
+                            ) {
+                                Icon(
+                                    Icons.Default.Close,
+                                    contentDescription = "Xóa ảnh",
+                                    tint = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
                         }
                     }
                 }
@@ -130,11 +146,12 @@ fun CreatePostScreen(
 
             OutlinedButton(
                 onClick = { imagePickerLauncher.launch("image/*") },
+                enabled = selectedImages.size < 15,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Icon(Icons.Default.Image, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(if (selectedImageBytes != null) "Đổi ảnh" else "Thêm ảnh")
+                Text(if (selectedImages.isEmpty()) "Thêm ảnh (tối đa 15)" else "Thêm ảnh khác")
             }
 
             if (errorMessage != null) {

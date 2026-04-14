@@ -97,6 +97,33 @@ class PostsRepositoryImpl @Inject constructor(
         }.decodeSingle<Post>()
     }
 
+    override suspend fun createPostMulti(
+        contentText: String?,
+        images: List<Pair<ByteArray, String>>,
+        linkUrl: String?
+    ): Result<Post> = safeApiCall {
+        val limited = images.take(15)
+        val urls = limited.map { (bytes, name) ->
+            val path = "$currentUserId/$name"
+            storage.from("post_images").upload(path, bytes) { upsert = true }
+            storage.from("post_images").publicUrl(path)
+        }
+        val joined = urls.joinToString("\n").ifBlank { null }
+        val postType = when {
+            joined != null -> "image"
+            linkUrl != null -> "link"
+            else -> "text"
+        }
+        val post = Post(
+            authorId = currentUserId,
+            postType = postType,
+            content = contentText,
+            imageUrl = joined,
+            linkUrl = linkUrl
+        )
+        postgrest.from("posts").insert(post) { select() }.decodeSingle<Post>()
+    }
+
     override suspend fun getPostDetail(postId: String): Result<PostWithDetails> = safeApiCall {
         val post = postgrest.from("posts")
             .select { filter { eq("id", postId) } }

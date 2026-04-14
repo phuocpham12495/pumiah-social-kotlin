@@ -10,6 +10,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+data class SelectedImage(val bytes: ByteArray, val name: String, val uriString: String)
+
 @HiltViewModel
 class CreatePostViewModel @Inject constructor(
     private val postsRepository: PostsRepository
@@ -21,10 +23,8 @@ class CreatePostViewModel @Inject constructor(
     private val _linkUrl = MutableStateFlow("")
     val linkUrl: StateFlow<String> = _linkUrl.asStateFlow()
 
-    private val _selectedImageBytes = MutableStateFlow<ByteArray?>(null)
-    val selectedImageBytes: StateFlow<ByteArray?> = _selectedImageBytes.asStateFlow()
-
-    private val _selectedImageName = MutableStateFlow<String?>(null)
+    private val _selectedImages = MutableStateFlow<List<SelectedImage>>(emptyList())
+    val selectedImages: StateFlow<List<SelectedImage>> = _selectedImages.asStateFlow()
 
     private val _isPosting = MutableStateFlow(false)
     val isPosting: StateFlow<Boolean> = _isPosting.asStateFlow()
@@ -38,23 +38,26 @@ class CreatePostViewModel @Inject constructor(
     fun updateContentText(value: String) { _contentText.value = value }
     fun updateLinkUrl(value: String) { _linkUrl.value = value }
 
-    fun setSelectedImage(bytes: ByteArray, name: String) {
-        _selectedImageBytes.value = bytes
-        _selectedImageName.value = name
+    fun addImages(newImages: List<SelectedImage>) {
+        val combined = (_selectedImages.value + newImages).take(15)
+        _selectedImages.value = combined
+        if ((_selectedImages.value + newImages).size > 15) {
+            _errorMessage.value = "Tối đa 15 ảnh mỗi bài viết"
+        }
     }
 
-    fun clearSelectedImage() {
-        _selectedImageBytes.value = null
-        _selectedImageName.value = null
+    fun removeImage(uriString: String) {
+        _selectedImages.value = _selectedImages.value.filterNot { it.uriString == uriString }
     }
+
+    fun clearImages() { _selectedImages.value = emptyList() }
 
     fun createPost() {
         val text = _contentText.value.ifBlank { null }
         val link = _linkUrl.value.ifBlank { null }
-        val imageBytes = _selectedImageBytes.value
-        val imageName = _selectedImageName.value
+        val images = _selectedImages.value
 
-        if (text == null && imageBytes == null && link == null) {
+        if (text == null && images.isEmpty() && link == null) {
             _errorMessage.value = "Vui lòng nhập nội dung, ảnh hoặc liên kết"
             return
         }
@@ -62,7 +65,11 @@ class CreatePostViewModel @Inject constructor(
         viewModelScope.launch {
             _isPosting.value = true
             _errorMessage.value = null
-            postsRepository.createPost(text, imageBytes, imageName, link).fold(
+            postsRepository.createPostMulti(
+                contentText = text,
+                images = images.map { it.bytes to it.name },
+                linkUrl = link
+            ).fold(
                 onSuccess = { _postSuccess.value = true },
                 onFailure = { _errorMessage.value = it.message ?: "Lỗi đăng bài" }
             )
